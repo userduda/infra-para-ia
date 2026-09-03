@@ -47,3 +47,10 @@ def prediz(entrada: Entrada):
         sentimento=modelo.classes_[indice],
         confianca=round(float(probabilidades[indice]), 4),
     )
+
+@app.get("/sobre")
+def sobre():
+    """Responsável pela atividade."""
+    return {
+        "nome": "Eduarda Lopes Machado"
+    }
