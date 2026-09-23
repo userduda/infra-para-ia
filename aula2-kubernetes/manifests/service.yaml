@@ -1,0 +1,20 @@
+# Aula 2 — um endereço estável (e público) na frente do pod.
+#
+# type: LoadBalancer faz o Azure criar um load balancer real com IP público.
+# O selector precisa casar com as labels do pod; se não casar, o Service
+# ganha IP mas fica sem endpoints, e o curl não responde nada.
+#
+# Aplicar:   kubectl apply -f manifests/service.yaml
+# Observar:  kubectl get svc sentiment-api -w      (até EXTERNAL-IP aparecer)
+#            kubectl get endpoints sentiment-api    (lista vazia = selector errado)
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentiment-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: sentiment-api      # todo pod com esta label entra na lista de destinos
+  ports:
+    - port: 80              # a porta que o mundo chama (http://IP, sem :8000)
+      targetPort: 8000      # a porta do container (containerPort do pod.yaml)

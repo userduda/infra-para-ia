@@ -1,0 +1,24 @@
+# Aula 3 — o MESMO service.yaml da Aula 2, sem uma vírgula de diferença.
+#
+# O selector agora casa com três pods em vez de um: o Service vira um
+# balanceador de carga sem que nada mude aqui. Só entram na lista de
+# endpoints os pods cuja readiness probe passou.
+#
+# type: LoadBalancer faz o Azure criar um load balancer real com IP público.
+# O selector precisa casar com as labels do pod; se não casar, o Service
+# ganha IP mas fica sem endpoints, e o curl não responde nada.
+#
+# Aplicar:   kubectl apply -f manifests/service.yaml
+# Observar:  kubectl get svc sentiment-api -w      (até EXTERNAL-IP aparecer)
+#            kubectl get endpoints sentiment-api    (lista vazia = selector errado)
+apiVersion: v1
+kind: Service
+metadata:
+  name: sentiment-api
+spec:
+  type: LoadBalancer
+  selector:
+    app: sentiment-api      # todo pod com esta label entra na lista de destinos
+  ports:
+    - port: 80              # a porta que o mundo chama (http://IP, sem :8000)
+      targetPort: 8000      # a porta do container (containerPort do pod.yaml)

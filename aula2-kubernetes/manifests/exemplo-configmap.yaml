@@ -1,0 +1,42 @@
+# Aula 2 — ConfigMap e Secret: SÓ CONCEITO, não entra na prática de hoje.
+#
+# A regra da Aula 1 continua valendo: a imagem é a mesma em todos os
+# ambientes, e o que muda (configuração, credenciais) vai por fora.
+# No Docker isso era o -e do docker run; no Kubernetes, são estes objetos.
+#
+# Quem quiser experimentar:
+#   kubectl apply -f manifests/exemplo-configmap.yaml
+#   kubectl get configmap,secret
+#   kubectl describe configmap sentiment-api-config
+#   kubectl get secret sentiment-api-secret -o yaml   # repare: base64, não criptografia
+#
+# Para injetar no pod, o bloco envFrom (comentado no final) entra dentro
+# do container em pod.yaml. A API atual não usa nenhuma dessas variáveis:
+# elas só apareceriam em `kubectl exec sentiment-api -- env`.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sentiment-api-config
+data:
+  LOG_LEVEL: "info"                 # configuração comum, em texto claro
+  NOME_DO_MODELO: "modelo.pkl"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: sentiment-api-secret
+type: Opaque
+stringData:                          # stringData aceita texto; o cluster guarda em base64
+  API_KEY: "troque-isto"             # em produção: cofre de segredos (Azure Key Vault)
+
+# --- Como o pod consumiria os dois, como variáveis de ambiente ------------
+#
+# spec:
+#   containers:
+#     - name: api
+#       image: ghcr.io/rodolfo-s-antunes/sentiment-api:v2
+#       envFrom:
+#         - configMapRef:
+#             name: sentiment-api-config
+#         - secretRef:
+#             name: sentiment-api-secret

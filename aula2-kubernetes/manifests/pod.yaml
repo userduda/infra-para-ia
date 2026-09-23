@@ -1,0 +1,21 @@
+# Aula 2 — o menor objeto do Kubernetes: um Pod com a API de sentimento.
+#
+# Antes de aplicar: troque SUBSTITUA pelos nomes da dupla (minúsculas,
+# sem acentos, ex.: ana-joao). Não altere image nem containerPort.
+#
+# Aplicar:   kubectl apply -f manifests/pod.yaml
+# Observar:  kubectl get pods -w
+#            kubectl describe pod sentiment-api
+apiVersion: v1
+kind: Pod
+metadata:
+  name: sentiment-api
+  labels:
+    app: sentiment-api      # é esta label que o Service procura (service.yaml)
+    dupla: SUBSTITUA
+spec:
+  containers:
+    - name: api
+      image: ghcr.io/rodolfo-s-antunes/sentiment-api:v2
+      ports:
+        - containerPort: 8000   # a porta em que o uvicorn escuta

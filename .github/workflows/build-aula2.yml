@@ -1,0 +1,61 @@
+# Constrói as imagens das Aulas 2 e 3 (Kubernetes) e publica no GitHub
+# Container Registry (GHCR).
+#
+# Uma só receita (aula2-kubernetes/api/Dockerfile), construída duas vezes:
+#   --build-arg VERSAO=v2  ->  ghcr.io/<dono-do-repo>/sentiment-api:v2
+#   --build-arg VERSAO=v3  ->  ghcr.io/<dono-do-repo>/sentiment-api:v3
+# v2 e v3 só diferem no valor que a API devolve em /versao: é o suficiente
+# para o rolling update da Aula 3 ficar visível.
+#
+# Roda a cada push na main que altere aula2-kubernetes/api/ (e também
+# manualmente, pela aba Actions -> Run workflow).
+#
+# O pacote `sentiment-api` é o mesmo da Aula 1, já público; as tags novas
+# herdam a visibilidade. A tag `latest` continua apontando para a v1 e não é
+# tocada aqui.
+
+name: build-aula2
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "aula2-kubernetes/api/**"
+      - ".github/workflows/build-aula2.yml"
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        versao: [v2, v3]
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Login no GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lowercase owner
+        run: echo "OWNER_LC=${GITHUB_REPOSITORY_OWNER,,}" >> $GITHUB_ENV
+
+      - name: Build e push da imagem ${{ matrix.versao }}
+        uses: docker/build-push-action@v6
+        with:
+          context: aula2-kubernetes/api
+          push: true
+          build-args: |
+            VERSAO=${{ matrix.versao }}
+          # Mesmo motivo da Aula 1: manifesto Docker simples, sem índice OCI
+          # de proveniência/SBOM, para qualquer runtime consumir sem surpresa.
+          provenance: false
+          sbom: false
+          tags: ghcr.io/${{ env.OWNER_LC }}/sentiment-api:${{ matrix.versao }}

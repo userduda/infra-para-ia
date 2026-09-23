@@ -1,0 +1,61 @@
+# Aula 3 — o objeto do dia a dia: um Deployment com três réplicas da API.
+#
+# Um arquivo, três camadas: você escreve o Deployment; ele cria e versiona
+# ReplicaSets; cada ReplicaSet mantém o número certo de pods vivos.
+#
+# Aplicar:    kubectl apply -f manifests/deployment.yaml
+# Observar:   kubectl rollout status deployment/sentiment-api
+#             kubectl get deploy,rs,pods -o wide
+# Atualizar:  kubectl set image deployment/sentiment-api api=ghcr.io/rodolfo-s-antunes/sentiment-api:v3
+# Voltar:     kubectl rollout undo deployment/sentiment-api
+apiVersion: apps/v1               # Deployment vive no grupo apps, não no núcleo v1
+kind: Deployment
+metadata:
+  name: sentiment-api
+spec:
+  replicas: 3                     # o número que o ReplicaSet persegue para sempre
+
+  selector:                       # como o Deployment reconhece os pods que são dele;
+    matchLabels:                  # precisa bater com template.metadata.labels
+      app: sentiment-api
+
+  strategy:
+    type: RollingUpdate           # troca pod a pod (a alternativa, Recreate, derruba tudo)
+    rollingUpdate:
+      maxSurge: 1                 # pode existir 1 pod a mais que o desejado durante a troca
+      maxUnavailable: 0           # e nunca 1 a menos: capacidade total o tempo todo
+
+  template:                       # daqui para baixo é o pod.yaml da Aula 2, embutido
+    metadata:
+      labels:
+        app: sentiment-api        # todo pod nasce com esta label: é o que o Service procura
+    spec:
+      containers:
+        - name: api               # o nome usado no kubectl set image ... api=...
+          image: ghcr.io/rodolfo-s-antunes/sentiment-api:v2
+          ports:
+            - containerPort: 8000
+
+          resources:
+            requests:             # o que o scheduler reserva para decidir se o pod cabe no nó
+              cpu: 100m           # um décimo de núcleo: 3 réplicas cabem folgadas no D2as_v7
+              memory: 128Mi
+            limits:               # o teto que o container não pode ultrapassar (cgroups)
+              cpu: 500m
+              memory: 512Mi
+
+          readinessProbe:         # "já pode receber tráfego?"
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5    # carência para o modelo carregar
+            periodSeconds: 5          # pergunta a cada 5 s
+            failureThreshold: 3       # 3 falhas seguidas: sai dos endpoints do Service
+
+          livenessProbe:          # "ainda está vivo?"
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 15   # mais tolerante que a readiness, de propósito
+            periodSeconds: 10
+            failureThreshold: 3       # 3 falhas seguidas: o container é reiniciado
