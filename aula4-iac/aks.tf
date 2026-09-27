@@ -11,6 +11,7 @@ resource "azurerm_kubernetes_cluster" "aks" {
     vm_size    = var.node_vm_size
 
     tags = local.tags
+    temporary_name_for_rotation = "temporario"
   }
 
   identity {
