@@ -6,12 +6,12 @@ resource "azurerm_kubernetes_cluster" "aks" {
   sku_tier            = "Free"
 
   default_node_pool {
-    name       = "default"
-    node_count = var.node_count
-    vm_size    = var.node_vm_size
+    name                        = "default"
+    node_count                  = var.node_count
+    vm_size                     = var.node_vm_size
+    temporary_name_for_rotation = "temporario"
 
     tags = local.tags
-    temporary_name_for_rotation = "temporario"
   }
 
   identity {
