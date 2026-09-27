@@ -1,6 +1,6 @@
 resource "azurerm_kubernetes_cluster" "aks" {
   name                = "aks-${var.dupla}"
-  location            = azurerm_resource_group.rg.location
+  location            = var.aks_location
   resource_group_name = azurerm_resource_group.rg.name
   dns_prefix          = "aks-${var.dupla}"
   sku_tier            = "Free"
