@@ -54,3 +54,9 @@ variable "node_count" {
   type        = number
   default     = 1
 }
+
+variable "aks_location" {
+  description = "Região do AKS, separada dos demais recursos."
+  type        = string
+  default     = "eastus"
+}
